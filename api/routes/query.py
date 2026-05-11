@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import json
+
 from pydantic import BaseModel, Field
 
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 
 from src.core.orchestrator import AgenticOrchestrator
 
@@ -28,3 +31,15 @@ async def agentic_query(body: QueryRequest) -> QueryResponse:
         answer=state.get("final_answer", ""),
         trace=state.get("tool_trace", []),
     )
+
+
+@router.post("/agentic/stream")
+async def agentic_query_stream(body: QueryRequest) -> StreamingResponse:
+    """Server-Sent Events stream of orchestrator state snapshots (values mode)."""
+
+    async def event_gen():
+        orch = AgenticOrchestrator()
+        async for snap in orch.run_stream(body.question):
+            yield f"data: {json.dumps(snap, default=str)}\n\n"
+
+    return StreamingResponse(event_gen(), media_type="text/event-stream")
