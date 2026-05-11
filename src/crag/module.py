@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from enum import Enum
 
 from config.settings import get_settings
-from src.crag.evaluators import consistency_judge_stub, relevance_scores_stub
+from src.crag.evaluators import consistency_judge, relevance_scores
+from src.llm.client import ChatClient
 
 
 class RelevanceLevel(str, Enum):
@@ -31,10 +32,12 @@ class CRAGModule:
     def __init__(
         self,
         *,
+        llm: ChatClient | None = None,
         relevance_threshold: float | None = None,
         web_search_fn=None,
     ) -> None:
         settings = get_settings()
+        self._llm = llm
         self.threshold = relevance_threshold if relevance_threshold is not None else settings.crag_relevance_threshold
         self.web_search = web_search_fn
 
@@ -49,7 +52,7 @@ class CRAGModule:
                 reasoning="no_chunks",
             )
 
-        scores = await relevance_scores_stub(query, retrieved_chunks)
+        scores = await relevance_scores(query, retrieved_chunks, self._llm)
         high = [c for c, s in zip(retrieved_chunks, scores, strict=True) if s >= self.threshold]
         low = [c for c, s in zip(retrieved_chunks, scores, strict=True) if s < self.threshold]
         web_triggered = False
@@ -59,10 +62,9 @@ class CRAGModule:
             web_triggered = True
             _ = low
 
-        conflict, desc = await consistency_judge_stub(query, high)
+        conflict, desc = await consistency_judge(query, high, self._llm)
         verified = high
         if conflict:
-            # Skeleton resolution: keep highest relevance slice
             verified = high[: max(1, min(3, len(high)))]
 
         overall = sum(scores) / len(scores) if scores else 0.0
