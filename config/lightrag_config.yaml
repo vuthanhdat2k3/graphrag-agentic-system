@@ -1,0 +1,6 @@
+# LightRAG runtime hints (actual wiring lives in src/retrieval/lightrag_client.py)
+working_dir: ./rag_storage
+graph_storage: Neo4JStorage
+# Optional: tune dual retrieval / chunking when using HKUDS LightRAG APIs
+# chunk_token_size: 1200
+# llm_model: gpt-4o
