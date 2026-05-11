@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     elasticsearch_url: str | None = Field(default=None, alias="ELASTICSEARCH_URL")
     elasticsearch_index: str = Field(default="docs_bm25", alias="ELASTICSEARCH_INDEX")
+    elasticsearch_content_field: str = Field(default="content", alias="ELASTICSEARCH_CONTENT_FIELD")
 
     redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
 
