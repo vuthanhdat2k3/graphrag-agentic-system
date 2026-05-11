@@ -19,6 +19,7 @@ dependencies = [
     "python-dotenv>=1.0",
     "langgraph>=0.2",
     "langchain-core>=0.2",
+    "openai>=1.0",
 ]
 
 [project.optional-dependencies]
@@ -32,7 +33,7 @@ neo4j = ["neo4j>=5.18"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-exclude = ["tests*", "scripts*", "notebooks*", "docs*"]
+exclude = ["tests*", "scripts*", "notebooks*", "docs*", "vendor*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -1,4 +1,4 @@
-"""RAG-Anything integration hooks (HKUDS multimodal → LightRAG)."""
+"""RAG-Anything integration hooks (HKUDS multimodal → LightRAG) — placeholder."""
 
 from __future__ import annotations
 

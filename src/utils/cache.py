@@ -11,7 +11,12 @@ from config.settings import get_settings
 
 async def get_redis() -> redis.Redis:
     settings = get_settings()
-    return redis.from_url(settings.redis_url, decode_responses=True)
+    return redis.from_url(
+        settings.redis_url,
+        decode_responses=True,
+        socket_connect_timeout=2.0,
+        socket_timeout=2.0,
+    )
 
 
 async def cache_get(client: redis.Redis, key: str) -> str | None:

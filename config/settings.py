@@ -67,7 +67,10 @@ class Settings(BaseSettings):
     crag_expand_threshold: float = Field(default=0.60, alias="CRAG_EXPAND_THRESHOLD")
     crag_relevance_threshold: float = Field(default=0.50, alias="CRAG_RELEVANCE_THRESHOLD")
 
-
-@lru_cache
+    ingest_root: Path | None = Field(
+        default=None,
+        alias="INGEST_ROOT",
+        description="If set, ingest API only allows files under this directory.",
+    )
 def get_settings() -> Settings:
     return Settings()

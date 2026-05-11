@@ -80,7 +80,12 @@ class CachedLightRAGClient:
             return await self._inner.query(q, mode)
 
         key = self._key(q, mode)
-        client = redis_mod.from_url(s.redis_url, decode_responses=True)
+        client = redis_mod.from_url(
+            s.redis_url,
+            decode_responses=True,
+            socket_connect_timeout=2.0,
+            socket_timeout=2.0,
+        )
         try:
             cached = await client.get(key)
             if cached:

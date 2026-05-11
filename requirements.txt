@@ -1,4 +1,7 @@
-# Mirrors pyproject runtime deps for pip-only installs
+# Primary install: pip install -e ".[dev]" (uses pyproject; includes vendor LightRAG).
+# Fallback: pip install -r requirements.txt
+-e ./vendor/LightRAG
+openai>=1.0
 pydantic>=2.6
 pydantic-settings>=2.2
 fastapi>=0.110
