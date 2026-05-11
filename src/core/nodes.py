@@ -6,6 +6,7 @@ import uuid
 from typing import Any
 
 from config.settings import get_settings
+from src.agents.planner import llm_decompose, llm_route
 from src.agents.step_back import maybe_step_back
 from src.agents.tools import get_tools
 from src.core.state import AgentState
@@ -25,8 +26,11 @@ def _trace_append(state: AgentState, step: str, payload: dict[str, Any]) -> list
 async def node_plan(state: AgentState) -> dict[str, Any]:
     load_prompt("orchestrator.md")
     user_q = state["user_query"]
-    step_back = await maybe_step_back(user_q)
     subqs = [user_q] if not state.get("sub_questions") else state["sub_questions"]
+    planned = await llm_decompose(user_q)
+    if planned.get("sub_questions"):
+        subqs = planned["sub_questions"]
+    step_back = await maybe_step_back(user_q)
     return {
         "sub_questions": subqs,
         "step_back_query": step_back,
@@ -37,12 +41,20 @@ async def node_plan(state: AgentState) -> dict[str, Any]:
 
 async def node_route(state: AgentState) -> dict[str, Any]:
     q = state["user_query"]
-    mode = "hybrid"
-    if any(k in q.lower() for k in ("điều khoản", "mục", "document", "file")):
-        route = "bm25_search"
-    else:
-        route = "lightrag_query"
     loop = state.get("loop_count", 0) + 1
+    route = "lightrag_query"
+    mode = "hybrid"
+
+    llm_r = await llm_route(q, loop)
+    if llm_r.get("route_tool") in ("lightrag_query", "bm25_search"):
+        route = str(llm_r["route_tool"])
+    if llm_r.get("lightrag_mode") in ("local", "global", "hybrid", "naive"):
+        mode = str(llm_r["lightrag_mode"])  # type: ignore[assignment]
+
+    if not (get_settings().use_llm_planner and llm_r):
+        if any(k in q.lower() for k in ("điều khoản", "mục", "document", "file")):
+            route = "bm25_search"
+
     return {
         "route_tool": route,
         "lightrag_mode": mode,  # type: ignore[typeddict-item]
