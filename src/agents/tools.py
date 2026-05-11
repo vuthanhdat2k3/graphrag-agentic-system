@@ -1,4 +1,4 @@
-"""Tool registry + default stubs (LightRAG, Cypher, BM25, CRAG, web)."""
+"""Tool registry + defaults (LightRAG, Cypher, BM25, CRAG, web)."""
 
 from __future__ import annotations
 
@@ -6,10 +6,12 @@ import contextvars
 from dataclasses import dataclass
 from typing import Protocol
 
+from src.agents.web_search import make_web_search_fn
 from src.crag.module import CRAGModule, CRAGResult
-from src.retrieval.bm25 import BM25Document, bm25_search_stub
-from src.retrieval.cypher import CypherClient, cypher_stub
-from src.retrieval.lightrag_client import LightRAGClient, LightRAGMode, RetrievalResult, lightrag_query_stub
+from src.llm.client import get_crag_chat_client
+from src.retrieval.bm25 import BM25Document, bm25_search
+from src.retrieval.cypher import CypherClient, make_cypher_client
+from src.retrieval.lightrag_client import LightRAGClient, LightRAGMode, RetrievalResult, get_default_lightrag_client
 
 _current_tools: contextvars.ContextVar["ToolRegistry | None"] = contextvars.ContextVar(
     "tool_registry",
@@ -31,7 +33,7 @@ class ToolRegistry:
         return await self.lightrag.query(query, mode)
 
     async def bm25_search(self, query: str, top_k: int = 10) -> list[BM25Document]:
-        return await bm25_search_stub(query, top_k=top_k)
+        return await bm25_search(query, top_k=top_k)
 
     async def crag_verify(self, query: str, chunks: list[str]) -> CRAGResult:
         return await self.crag.evaluate(query, chunks)
@@ -44,10 +46,13 @@ class ToolRegistry:
 
 def default_tool_registry() -> ToolRegistry:
     return ToolRegistry(
-        lightrag=lightrag_query_stub,
-        cypher=cypher_stub,
-        crag=CRAGModule(),
-        web_search=None,
+        lightrag=get_default_lightrag_client(),
+        cypher=make_cypher_client(),
+        crag=CRAGModule(
+            llm=get_crag_chat_client(),
+            web_search_fn=make_web_search_fn(),
+        ),
+        web_search=make_web_search_fn(),
     )
 
 
